@@ -1,51 +1,19 @@
 const router = require("express").Router();
-const { PrismaClient } = require("@prisma/client");
-const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
-
-const prisma = new PrismaClient();
+const { createUser, loginUser } = require("../api/auth");
 
 router.post("/register", async (req, res) => {
   const { username, email, password } = req.body;
-  const hashedPassword = await bcrypt.hash(password, 10);
-
-  const user = await prisma.user.create({
-    data: {
-      username: username,
-      email: email,
-      password: hashedPassword,
-    },
-  });
+  const user = await createUser(username, email, password);
 
   return res.json({ user });
 });
 
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
-  const user = await prisma.user.findUnique({ where: { email } });
-  if (!user)
-    return res.status(401).json({ error: "Login failed. User not found" });
+  const userInfo = await loginUser(email, password, res);
 
-  const error = await validateUser(user, password);
-  if (error)
-    return res
-      .status(401)
-      .json({ error: "Login failed. password doesn't match" });
-
-  const token = jwt.sign({ id: user.id }, process.env.SECRET_KEY, {
-    expiresIn: "1d",
-  });
-
-  return res.json({ token: token, user: user });
+  if (userInfo?.token) return res.json(userInfo);
+  return res;
 });
-
-const validateUser = async (user, requestedPassword) => {
-  const isPasswordValid = await bcrypt.compare(
-    requestedPassword,
-    user.password
-  );
-  if (!isPasswordValid) return true;
-  return false;
-};
 
 module.exports = router;
