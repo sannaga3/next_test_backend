@@ -1,11 +1,17 @@
 const request = require("supertest");
 const { createUser, isExistUser } = require("../api/auth");
-const server = require("../server");
+const { createApp } = require("../createApp");
 
 describe("Auth test", () => {
+  let server;
+
+  beforeAll(() => {
+    server = createApp();
+    server.listen(5002);
+  });
+
   afterAll((done) => {
     server.close(() => {
-      console.log("Server closed");
       done();
     });
   });
@@ -61,7 +67,7 @@ describe("Auth test", () => {
       expect(user).toHaveProperty("password");
     });
 
-    it("User not failed.", async () => {
+    it("User not found.", async () => {
       const res = await request(server).post("/api/auth/login").send({
         email: "testEmail@atest.com",
         password: testUser.password,

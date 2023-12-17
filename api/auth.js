@@ -16,6 +16,10 @@ const createUser = async (username, email, password) => {
   });
 };
 
+const getUser = async (email) => {
+  return await prisma.user.findUnique({ where: { email } });
+};
+
 const loginUser = async (email, password, res) => {
   const user = await prisma.user.findUnique({ where: { email } });
 
@@ -52,4 +56,4 @@ const isExistUser = async (email) => {
   return Object.keys(user).length > 0 ? true : false;
 };
 
-module.exports = { createUser, loginUser, isExistUser };
+module.exports = { createUser, loginUser, isExistUser, getUser };
